@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生日快乐 🎵</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #0a0a0f;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景光晕 */
+        .bg-glow {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        .bg-glow-1 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, #ff6b9d, transparent);
+            top: -100px; left: -100px;
+            animation: drift1 8s ease-in-out infinite;
+        }
+        .bg-glow-2 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, #7c4dff, transparent);
+            bottom: -100px; right: -100px;
+            animation: drift2 10s ease-in-out infinite;
+        }
+        .bg-glow-3 {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, #00e5ff, transparent);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            animation: drift3 6s ease-in-out infinite;
+        }
+        @keyframes drift1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(60px,40px)} }
+        @keyframes drift2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-40px,-60px)} }
+        @keyframes drift3 { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.3)} }
+
+        .scene {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            z-index: 10;
+        }
+
+        /* 唱片外层 */
+        .vinyl-wrapper {
+            position: relative;
+            width: 360px;
+            height: 360px;
+            cursor: pointer;
+        }
+
+        /* 唱片本体（整个唱片+文字一起旋转） */
+        .vinyl {
+            width: 360px;
+            height: 360px;
+            border-radius: 50%;
+            position: relative;
+            animation: spin 8s linear infinite;
+            animation-play-state: running;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 唱片底层 - 黑胶盘 */
+        .vinyl-disc {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at center, #1a1a1a 0%, #111 22%, transparent 22.5%),
+                repeating-radial-gradient(circle at center,
+                    #1c1c1c 0px, #222 2px, #1a1a1a 3px, #2a2a2a 4px
+                );
+            box-shadow:
+                0 0 0 3px #333,
+                0 0 50px rgba(255, 107, 157, 0.3),
+                0 0 100px rgba(124, 77, 255, 0.15),
+                inset 0 0 40px rgba(0,0,0,0.8);
+        }
+
+        /* 环绕文字 SVG - 在唱片沟纹上方、封面下方 */
+        .vinyl-text-svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* 唱片封面中心 */
+        .vinyl-cover {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid #555;
+            background: linear-gradient(135deg, #ff6b9d, #7c4dff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 44px;
+            z-index: 4;
+            box-shadow: 0 0 20px rgba(255,107,157,0.3);
+        }
+
+        .vinyl-cover img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        /* 中心小圆孔 */
+        .vinyl-hole {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: #0a0a0f;
+            z-index: 5;
+            border: 2px solid #444;
+        }
+
+        /* 唱针底座 */
+        .needle-pivot {
+            position: absolute;
+            top: 10px; right: 10px;
+            width: 20px; height: 20px;
+            background: radial-gradient(circle, #ddd, #999);
+            border-radius: 50%;
+            z-index: 22;
+            box-shadow: 0 0 8px rgba(255,255,255,0.5);
+        }
+
+        /* 唱针臂 */
+        .needle-arm {
+            position: absolute;
+            top: 18px; right: 18px;
+            width: 140px; height: 6px;
+            background: linear-gradient(to left, #bbb, #888, #ccc);
+            border-radius: 3px;
+            transform-origin: right center;
+            transform: rotate(-30deg);
+            transition: transform 0.8s ease;
+            z-index: 20;
+        }
+        .needle-arm.playing { transform: rotate(0deg); }
+
+        .needle-tip {
+            position: absolute;
+            left: -2px; top: 50%;
+            transform: translateY(-50%);
+            width: 10px; height: 10px;
+            background: #e8e8e8;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255,255,255,0.6);
+        }
+
+        /* 播放按钮 */
+        .play-btn {
+            position: absolute;
+            bottom: -10px; left: 50%;
+            transform: translateX(-50%);
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b9d, #7c4dff);
+            border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 20px rgba(255, 107, 157, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 30;
+        }
+        .play-btn:hover {
+            transform: translateX(-50%) scale(1.12);
+            box-shadow: 0 6px 30px rgba(255, 107, 157, 0.8);
+        }
+        .play-icon { color: white; font-size: 20px; margin-left: 3px; }
+
+        /* 音符飘动 */
+        .note {
+            position: fixed;
+            font-size: 24px;
+            opacity: 0;
+            pointer-events: none;
+            animation: floatNote 3s ease-out forwards;
+        }
+        @keyframes floatNote {
+            0%   { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+            100% { opacity: 0; transform: translateY(-220px) rotate(30deg) scale(0.6); }
+        }
+
+        /* 白羊座漂浮图案 */
+        .aries-float {
+            position: fixed;
+            pointer-events: none;
+            opacity: 0;
+            animation: floatAries 4s ease-out forwards;
+            z-index: 100;
+        }
+        .aries-symbol {
+            color: rgba(255, 220, 80, 0.9);
+            text-shadow: 0 0 12px rgba(255, 200, 50, 0.8), 0 0 24px rgba(255, 150, 50, 0.4);
+        }
+        .aries-star {
+            color: rgba(255, 255, 200, 0.8);
+            text-shadow: 0 0 10px rgba(255, 255, 150, 0.6);
+        }
+        .aries-sheep {
+            color: rgba(255, 180, 200, 0.9);
+            text-shadow: 0 0 10px rgba(255, 150, 180, 0.6);
+        }
+        @keyframes floatAries {
+            0%   { opacity: 0;   transform: translateY(0)    rotate(-10deg) scale(0.5); }
+            15%  { opacity: 1;   transform: translateY(-30px) rotate(5deg)  scale(1); }
+            80%  { opacity: 0.8; transform: translateY(-160px) rotate(-5deg) scale(0.9); }
+            100% { opacity: 0;   transform: translateY(-240px) rotate(10deg) scale(0.7); }
+        }
+
+        /* 卡片文字区域 */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 36px 40px;
+            max-width: 380px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+        }
+        .card h1 {
+            font-size: 2.2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b9d, #ffd54f, #7c4dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        .card .subtitle {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9em;
+            margin-bottom: 24px;
+            letter-spacing: 2px;
+        }
+        .wishes-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .wishes-list li {
+            color: rgba(255,255,255,0.85);
+            font-size: 1em;
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border-left: 3px solid #ff6b9d;
+            text-align: left;
+        }
+        .wishes-list li:nth-child(2) { border-left-color: #ffd54f; }
+        .wishes-list li:nth-child(3) { border-left-color: #7c4dff; }
+
+        .progress-bar { width: 100%; margin-top: 16px; }
+        .progress-track {
+            width: 100%; height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(to right, #ff6b9d, #7c4dff);
+            border-radius: 2px;
+            animation: progress 30s linear infinite;
+            animation-play-state: paused;
+        }
+        .progress-fill.playing { animation-play-state: running; }
+        @keyframes progress { from { width: 0% } to { width: 100% } }
+
+        .time-labels {
+            display: flex; justify-content: space-between;
+            margin-top: 6px;
+            color: rgba(255,255,255,0.3);
+            font-size: 0.75em;
+        }
+        .hint {
+            color: rgba(255,255,255,0.3);
+            font-size: 0.8em;
+            margin-top: 14px;
+            letter-spacing: 1px;
+        }
+        .confetti-piece {
+            position: fixed;
+            pointer-events: none;
+        }
+
+        /* ===== 弹幕 ===== */
+        .danmaku-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 200;
+        }
+
+        .danmaku {
+            position: absolute;
+            right: -700px;          /* 从右侧屏幕外出发 */
+            white-space: nowrap;
+            font-size: 17px;
+            font-weight: 600;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            padding: 5px 16px;
+            border-radius: 20px;
+            pointer-events: none;
+            opacity: 0;
+            animation: danmakuFly linear forwards;
+        }
+
+        /* 特殊弹幕：你的生日是几号来着？ */
+        .danmaku-special {
+            background: rgba(255, 213, 79, 0.18);
+            border: 1px solid rgba(255, 213, 79, 0.5);
+            color: #ffd54f;
+            text-shadow: 0 0 10px rgba(255, 213, 79, 0.6);
+            font-size: 19px;
+        }
+
+        /* 普通弹幕：你是我最好的朋友 */
+        .danmaku-normal {
+            background: rgba(255, 107, 157, 0.15);
+            border: 1px solid rgba(255, 107, 157, 0.4);
+            color: #ff9fc8;
+            text-shadow: 0 0 8px rgba(255, 107, 157, 0.5);
+        }
+
+        @keyframes danmakuFly {
+            0%   { right: -700px; opacity: 0; }
+            5%   { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { right: 110vw; opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-glow bg-glow-3"></div>
+
+    <!-- 弹幕层 -->
+    <div class="danmaku-layer" id="danmakuLayer"></div>
+
+    <div class="scene">
+        <div class="vinyl-wrapper" id="vinylWrapper">
+
+            <!-- 整个唱片（盘面 + 文字 + 封面）一起旋转 -->
+            <div class="vinyl" id="vinyl">
+
+                <!-- 黑胶盘底层 -->
+                <div class="vinyl-disc"></div>
+
+                <!-- 环绕文字 SVG（在盘面沟纹上方） -->
+                <svg class="vinyl-text-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <path id="textCircle"
+                              d="M 180,62 A 118,118 0 1,1 179.99,62"
+                              fill="none"/>
+                        <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%"   stop-color="#ffd54f"/>
+                            <stop offset="50%"  stop-color="#ff6b9d"/>
+                            <stop offset="100%" stop-color="#ffd54f"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- 外圈文字 -->
+                    <text font-size="14.5"
+                          font-family="PingFang SC, Microsoft YaHei, sans-serif"
+                          font-weight="700"
+                          letter-spacing="5"
+                          fill="url(#textGrad)">
+                        <textPath href="#textCircle" startOffset="0%">
+                            ★ 杨安妹专属 ★ 杨安妹专属 ★ 杨安妹专属 ★ 杨安妹 ★
+                        </textPath>
+                    </text>
+                </svg>
+
+                <!-- 中心封面 -->
+                <div class="vinyl-cover" id="vinylCover">🎂</div>
+
+                <!-- 中心小孔 -->
+                <div class="vinyl-hole"></div>
+            </div>
+
+            <!-- 唱针（不随唱片转） -->
+            <div class="needle-pivot"></div>
+            <div class="needle-arm" id="needle">
+                <div class="needle-tip"></div>
+            </div>
+
+            <!-- 播放按钮 -->
+            <button class="play-btn" id="playBtn" onclick="togglePlay()">
+                <span class="play-icon" id="playIcon">⏸</span>
+            </button>
+        </div>
+
+        <!-- 文字卡片 -->
+        <div class="card">
+            <h1>生日快乐 🎂</h1>
+            <div class="subtitle">♪ 3月28日 · 白羊座 ♈ · 专属的一天 ♪</div>
+            <ul class="wishes-list">
+                <li>🌸 愿你每一岁都奔走在自己的热爱里</li>
+                <li>✨ 愿你所有努力都有回报，心想事成</li>
+                <li>💜 愿你笑靥如花，友谊长存，永远快乐</li>
+            </ul>
+            <div class="progress-bar">
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="time-labels">
+                    <span>♪ Happy Birthday · 杨安妹</span>
+                    <span>♈ 白羊座</span>
+                </div>
+            </div>
+            <div class="hint">点击 ⏸ 暂停旋转，再次点击继续</div>
+        </div>
+    </div>
+
+    <script>
+        let isPlaying = true; // 默认播放状态
+        const musicNotes = ['🎵', '🎶', '🎼', '♪', '♫'];
+
+        const ariesItems = [
+            { content: '♈', size: 36, cls: 'aries-symbol' },
+            { content: '♈', size: 28, cls: 'aries-symbol' },
+            { content: '♈', size: 44, cls: 'aries-symbol' },
+            { content: '⭐', size: 22, cls: 'aries-star' },
+            { content: '🐏', size: 30, cls: 'aries-sheep' },
+            { content: '✦', size: 28, cls: 'aries-star' },
+            { content: '♈', size: 20, cls: 'aries-symbol' },
+            { content: '🌟', size: 24, cls: 'aries-star' },
+            { content: '♈', size: 38, cls: 'aries-symbol' },
+        ];
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const vinyl = document.getElementById('vinyl');
+            const needle = document.getElementById('needle');
+            const playIcon = document.getElementById('playIcon');
+            const progressFill = document.getElementById('progressFill');
+
+            if (isPlaying) {
+                vinyl.style.animationPlayState = 'running';
+                needle.classList.add('playing');
+                progressFill.classList.add('playing');
+                playIcon.textContent = '⏸';
+                startNoteAnimation();
+                startAriesAnimation();
+                launchConfetti();
+            } else {
+                vinyl.style.animationPlayState = 'paused';
+                needle.classList.remove('playing');
+                progressFill.classList.remove('playing');
+                playIcon.textContent = '▶';
+            }
+        }
+
+        document.getElementById('vinyl').addEventListener('click', function(e) {
+            e.stopPropagation();
+            togglePlay();
+        });
+
+        // 音符飘动
+        let noteTimer = null;
+        function startNoteAnimation() {
+            if (!isPlaying) return;
+            const wrapper = document.getElementById('vinylWrapper');
+            const rect = wrapper.getBoundingClientRect();
+
+            const note = document.createElement('div');
+            note.className = 'note';
+            note.textContent = musicNotes[Math.floor(Math.random() * musicNotes.length)];
+            note.style.left = (rect.left + 40 + Math.random() * (rect.width - 80)) + 'px';
+            note.style.top  = (rect.top  + 40 + Math.random() * (rect.height - 80)) + 'px';
+            document.body.appendChild(note);
+
+            setTimeout(() => note.remove(), 3200);
+            clearTimeout(noteTimer);
+            noteTimer = setTimeout(startNoteAnimation, 700);
+        }
+
+        // 白羊座图案漂浮
+        let ariesTimer = null;
+        function startAriesAnimation() {
+            if (!isPlaying) return;
+
+            const item = ariesItems[Math.floor(Math.random() * ariesItems.length)];
+            const el = document.createElement('div');
+            el.className = 'aries-float ' + item.cls;
+            el.textContent = item.content;
+            el.style.fontSize = item.size + 'px';
+            el.style.left = (5 + Math.random() * 90) + 'vw';
+            el.style.top  = (30 + Math.random() * 50) + 'vh';
+            document.body.appendChild(el);
+
+            setTimeout(() => el.remove(), 4200);
+            clearTimeout(ariesTimer);
+            ariesTimer = setTimeout(startAriesAnimation, 500 + Math.random() * 800);
+        }
+
+        // 彩色纸屑
+        function launchConfetti() {
+            const colors = ['#ff6b9d', '#ffd54f', '#7c4dff', '#00e5ff', '#69f0ae', '#ff9800'];
+            for (let i = 0; i < 60; i++) {
+                setTimeout(() => {
+                    const el = document.createElement('div');
+                    el.className = 'confetti-piece';
+                    const size = Math.random() * 9 + 4;
+                    el.style.width  = size + 'px';
+                    el.style.height = size + 'px';
+                    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                    el.style.left = Math.random() * 100 + 'vw';
+                    el.style.top  = '-20px';
+                    el.style.opacity = '1';
+                    el.style.transition = `top ${2 + Math.random() * 2}s ease, opacity 0.5s ease`;
+                    document.body.appendChild(el);
+                    requestAnimationFrame(() => {
+                        el.style.top = (80 + Math.random() * 20) + 'vh';
+                        el.style.transform = `rotate(${Math.random() * 720}deg) translateX(${(Math.random()-0.5)*200}px)`;
+                    });
+                    setTimeout(() => el.remove(), 4500);
+                }, i * 60);
+            }
+        }
+
+        // 页面加载自动开始
+        window.addEventListener('load', () => {
+            startNoteAnimation();
+            startAriesAnimation();
+            startDanmaku();
+        });
+
+        // ===== 弹幕系统 =====
+        // 两条轨道的垂直位置（上下交替）
+        const danmakuTracks = [
+            { top: '12vh' },   // 轨道A：偏上
+            { top: '22vh' },   // 轨道B：上下交替
+        ];
+
+        // 普通弹幕内容（循环）
+        const normalTexts = [
+            '💖 你是我最好的朋友，是我的优先级。',
+            '🌸 你是我最好的朋友，是我的优先级。',
+            '✨ 你是我最好的朋友，是我的优先级。',
+            '💜 你是我最好的朋友，是我的优先级。',
+        ];
+
+        let specialSent = false;   // 特殊弹幕只发一次
+        let danmakuIndex = 0;      // 普通弹幕轮换颜色
+        let trackToggle = 0;       // 上下轨道切换
+
+        function sendDanmaku(text, cls, track) {
+            const layer = document.getElementById('danmakuLayer');
+            const el = document.createElement('div');
+            el.className = 'danmaku ' + cls;
+            el.textContent = text;
+
+            // 上下轨道位置
+            el.style.top = track.top;
+
+            // 飞行时长：8s~10s
+            const dur = 8 + Math.random() * 2;
+            el.style.animationDuration = dur + 's';
+
+            layer.appendChild(el);
+            setTimeout(() => el.remove(), (dur + 0.5) * 1000);
+        }
+
+        function startDanmaku() {
+            // 第一条：特殊弹幕，3秒后出现（仅一次）
+            setTimeout(() => {
+                sendDanmaku(
+                    '你的生日是几号来着？  3月28。🎂',
+                    'danmaku-special',
+                    danmakuTracks[0]
+                );
+                specialSent = true;
+            }, 3000);
+
+            // 普通弹幕：5秒后开始，循环发射
+            setTimeout(fireNormalDanmaku, 5000);
+        }
+
+        function fireNormalDanmaku() {
+            // 在两条轨道上下交替
+            const track = danmakuTracks[trackToggle % 2];
+            trackToggle++;
+
+            const text = normalTexts[danmakuIndex % normalTexts.length];
+            danmakuIndex++;
+
+            sendDanmaku(text, 'danmaku-normal', track);
+
+            // 每 2.2s 发一条（形成一上一下连续效果）
+            setTimeout(fireNormalDanmaku, 2200);
+        }
+    </script>
+</body>
+</html>
